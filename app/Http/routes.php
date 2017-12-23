@@ -30,6 +30,10 @@ Route::group(['middleware' => 'auth'], function () {
         Route::delete('unfollow', 'UserFollowController@destroy')->name('user.unfollow');
         Route::get('followings', 'UsersController@followings')->name('users.followings');
         Route::get('followers', 'UsersController@followers')->name('users.followers');
+        Route::post('favorite', 'UserFavoriteController@store')->name('micropost.favorite');
+        Route::delete('unfavorite', 'UserFavoriteController@destroy')->name('micropost.unfavorite');
+        Route::get('favorites', 'UsersController@favorites')->name('users.favorites');
+        //  URL: http://ドメイン/users/{id}/favorites
     });
     Route::resource('microposts', 'MicropostsController', ['only' => ['store', 'destroy']]);
 });

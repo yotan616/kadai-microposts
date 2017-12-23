@@ -65,4 +65,37 @@ class UsersController extends Controller
         
         return view('users.followers', $data);
     }
+    
+    //----ここからfavorite
+     public function favoring($micropost)
+   {
+       $micropost = Micropost::find($micropost);
+       $favoring = $user->favoring()->paginate(10);
+       
+       $data = [
+           'user' => $micropost,
+           'microposts' => $favoring,
+       ];
+       
+       $data += $this->counts($micropost);
+       
+       return view('micropost.favorite', $data);
+   }
+   
+   public function favorites($id)  // 何を受け取っている？？？？ $id
+   {
+       $user = User::find($id);     // ユーザモデルを取ってきてる。
+                                  //モデルはTableの一行なので nameもidも全部持ってる
+                                  // $user->name, $user->id
+       $favorites = $user->favorites()->paginate(10);
+       
+       $data = [
+           'user' =>  $user, //userには 数字（自分のユーザID) //$micropost,
+           'microposts' => $favorites,
+       ];
+       
+       $data += $this->counts($user); //ページタブのカウント
+       
+       return view('users.favorites', $data);
+   }
 }

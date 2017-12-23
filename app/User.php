@@ -47,6 +47,19 @@ class User extends Model implements AuthenticatableContract,
      public function followings()
     {
         return $this->belongsToMany(User::class, 'user_follow', 'user_id', 'follow_id')->withTimestamps();
+        /*
+        「Favoriteを考える」
+            $this->belongsToMany(User::class, 'user_follow', 'user_id', 'follow_id')
+                              // -----------   -----------    -------    ---------
+                              //     ①             ②            ③          ④
+        
+        $this は自分自身（Userクラス）
+        ① どのクラスでできた配列結果を返して欲しいの？ →　User::class  / 　Microposts::class
+        ② どの中間テーブルを見るの？　→　'user_follow'   / micropost_favorite  
+        ③ ②のテーブルの中であなた自身はどのカラム？　→　'user_id'   / user_id
+        ④ ②のテーブルの中でどのカラムを ①のクラスのidとすればいいの？　→　'follow_id'    / micropost_id
+            ④のカラムのIDを使って①のデータを結果として返す
+        */
     }
     
     public function followers()
@@ -54,11 +67,12 @@ class User extends Model implements AuthenticatableContract,
         return $this->belongsToMany(User::class, 'user_follow', 'follow_id', 'user_id')->withTimestamps();
     }
     
-    // 既にフォローしているかの確認 
+    
     public function follow($userId) {
-    // 自分自身ではないかの確認
+    // 既にフォローしているかの確認 
     $exist = $this->is_following($userId);
     
+    // 自分自身ではないかの確認
     $its_me = $this->id == $userId;
     
         if ($exist || $its_me) {
@@ -107,6 +121,63 @@ class User extends Model implements AuthenticatableContract,
         $follow_user_ids[] = $this->id;
         return Micropost::whereIn('user_id', $follow_user_ids);
     }
+    
+    //ここからfavorite--------------
+    
+     //多対多の関係を記述
+     public function favorites()
+    {
+        return $this->belongsToMany(Micropost::class, 'micropost_favorite', 'user_id', 'micropost_id')->withTimestamps();
+    }
+    
+    public function favorite($micropostId) 
+    {
+    // 既にフェイバリットしているかの確認 
+    $exist = $this->is_favoring($micropostId);  
+    
+    // 同じものではないかの確認--->不要
+    // $its_me = $this->id == $userId;
+    
+        if ($exist) {
+    
+            // 既にフェイバリットしていれば何もしない
+    
+            return false;
+    
+        } else {
+    
+            // 未フェイバリットであればフェイバリットする
+    
+            $this->favorites()->attach($micropostId);
+    
+            return true;
+    
+        }
+    }
+    
+    //フェイバリット、アンフェイバリットできるよう、モデルにメソッドを定義
+    public function unfavorite($micropostId)
+    {
+        // 既にフェイバリットしているかの確認
+        $exist = $this->is_favoring($micropostId);
+        
+        // 自分自身ではないかの確認-->不要
+        // $its_me = $this->id == $userId;
+    
+        if ($exist) {
+            // 既にフェイバリットしていればフェイバリットを外す
+            $this->favorites()->detach($micropostId);
+            return true;
+        } else {
+            // 未フォローであれば何もしない
+            return false;
+        }
+    }
+    
+    public function is_favoring($micropostId) {
+        return $this->favorites()->where('micropost_id', $micropostId)->exists();
+    }
+
 }
 
 
